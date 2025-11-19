@@ -1,91 +1,99 @@
-# JSON to PostgreSQL Importer
+# JSON to PostgreSQL Importer 🚀
 
-A powerful Next.js web application that allows you to upload JSON files and automatically import them into a local PostgreSQL database. It features dynamic schema inference, handling of nested objects, and automatic flattening of record arrays.
+[![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=for-the-badge&logo=Streamlit&logoColor=white)](https://streamlit.io/)
+[![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 
-## Features
+A robust, production-ready tool to seamlessly import complex JSON datasets into PostgreSQL. Built with Python and Streamlit, it handles dynamic schemas, nested structures, and massive record arrays with ease.
 
-### 🚀 Core Functionality
-- **Web Interface**: Clean and simple UI to configure database connection and upload files.
-- **Automatic Table Creation**: Creates tables dynamically based on JSON structure.
-- **Data Import**: Efficiently inserts data into your PostgreSQL database.
+## ✨ Key Features
 
-### 🧠 Smart Schema Inference
-- **Dynamic Columns**: Scans the entire JSON file to discover all unique keys across all rows.
-- **Type Detection**: Automatically detects data types (`INTEGER`, `DOUBLE PRECISION`, `BOOLEAN`, `TIMESTAMP`, `TEXT`).
-- **Conflict Resolution**: Handles mixed types by choosing the safest compatible type (e.g., `TEXT` or `JSONB`).
-- **ID Safety**: Automatically renames generated primary keys to `_generated_id` if your JSON already contains an `id` column.
+-   **Dynamic Schema Inference**: Automatically detects column names and data types (`INTEGER`, `FLOAT`, `BOOLEAN`, `TIMESTAMP`, `JSONB`) from your JSON data. No manual mapping required.
+-   **Smart Flattening**: Intelligently detects and flattens nested `records` arrays (common in telemetry/log data) into individual database rows.
+-   **JSONB Support**: Complex nested objects and arrays are automatically serialized and stored as `JSONB` columns, preserving data structure.
+-   **Conflict Resolution**: Safely handles primary key collisions by automatically renaming conflicting `id` columns in the source data.
+-   **User-Friendly UI**: Clean, intuitive interface for database configuration and file management.
 
-### 📦 Complex Data Support
-- **Nested Objects & Arrays**: Automatically detects nested structures and stores them as `JSONB` columns.
-- **Nested Records Extraction**: If your JSON contains a list of objects with a `records` array (e.g., Azure Telemetry logs), the app automatically extracts and flattens these records into individual rows.
+## 🛠️ Installation
 
-## Getting Started
+1.  **Clone the Repository**
+    ```bash
+    git clone https://github.com/yourusername/json-to-pg-app.git
+    cd json-to-pg-app
+    ```
 
-### Prerequisites
-- Node.js (v18+)
-- PostgreSQL Database running locally
+2.  **Set Up Environment**
+    It is recommended to use a virtual environment:
+    ```bash
+    python -m venv venv
+    source venv/bin/activate  # On Windows: venv\Scripts\activate
+    ```
 
-### Installation
+3.  **Install Dependencies**
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/kursad-can/json-to-pg-app.git
-   cd json-to-pg-app
-   ```
+## 🚀 Usage
 
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
+1.  **Start the Application**
+    ```bash
+    streamlit run app.py
+    ```
 
-3. Run the development server:
-   ```bash
-   npm run dev
-   ```
+2.  **Configure Database**
+    -   Enter your PostgreSQL connection string in the sidebar.
+    -   *Format*: `postgresql://user:password@localhost:5432/dbname`
 
-4. Open [http://localhost:3000](http://localhost:3000) in your browser.
+3.  **Import Data**
+    -   Enter a target **Table Name**.
+    -   Upload your `.json` file.
+    -   Review the data preview and click **Start Import**.
 
-## Usage
+## 📂 Supported Data Formats
 
-1. **Database Connection**: Enter your PostgreSQL connection string.
-   - Format: `postgresql://user:password@localhost:5432/dbname`
-2. **Table Name**: Enter the name of the table you want to create (e.g., `my_data`).
-3. **Select File**: Choose a `.json` file from your computer.
-4. **Import**: Click "Start Import".
-
-## Example Data Formats
-
-### Standard Array
+### 1. Standard Array of Objects
 ```json
 [
-  { "name": "Alice", "age": 30 },
-  { "name": "Bob", "age": 25 }
+  { "id": 1, "name": "Alice", "role": "Admin" },
+  { "id": 2, "name": "Bob", "role": "User" }
 ]
 ```
 
-### Nested Records (Automatically Flattened)
+### 2. Nested Records (Telemetry/Logs)
+Automatically extracts items from the `records` array.
 ```json
 [
   {
     "records": [
-      { "time": "10:00", "event": "login" },
-      { "time": "10:05", "event": "click" }
+      { "timestamp": "2023-01-01T12:00:00Z", "event": "login" },
+      { "timestamp": "2023-01-01T12:05:00Z", "event": "logout" }
     ]
   }
 ]
 ```
 
-### Complex/Dynamic Keys
+### 3. Complex Nested Structures
+Nested objects are stored as `JSONB`.
 ```json
 [
-  { "id": 1, "details": { "color": "red" } },
-  { "id": 2, "price": 99.99 } 
+  {
+    "product_id": 101,
+    "details": {
+      "color": "red",
+      "dimensions": { "w": 10, "h": 20 }
+    }
+  }
 ]
 ```
-*Result: Table will have columns `id`, `details` (JSONB), and `price`.*
 
-## Tech Stack
-- **Framework**: Next.js 15 (App Router)
-- **Database Client**: `pg` (node-postgres)
-- **Styling**: Vanilla CSS (CSS Modules & Global Styles)
-- **Language**: TypeScript
+## 📦 Tech Stack
+
+-   **Frontend**: [Streamlit](https://streamlit.io/)
+-   **Data Processing**: [Pandas](https://pandas.pydata.org/)
+-   **Database ORM**: [SQLAlchemy](https://www.sqlalchemy.org/)
+-   **Database Driver**: [psycopg2](https://pypi.org/project/psycopg2/)
+
+## 📄 License
+
+This project is licensed under the MIT License.

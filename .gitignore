@@ -1,44 +1,44 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+# Streamlit
+.streamlit/
 
-# testing
-/coverage
+# Virtual Env
+venv/
+env/
+ENV/
 
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
+# IDE
+.vscode/
+.idea/
 .DS_Store
-*.pem
 
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# env files (can opt-in for committing if needed)
-.env*
-
-# vercel
-.vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
-
-# test input
+# Data
+*.json
+!sample_data.json
+!complex_data.json
 nested_records.json
+
+# Local Prompts
+PROMPT.md
