@@ -1,0 +1,23 @@
+[
+  {
+    "name": "Alice Smith",
+    "age": 30,
+    "email": "alice@example.com",
+    "is_active": true,
+    "joined_at": "2023-01-15T10:00:00Z"
+  },
+  {
+    "name": "Bob Jones",
+    "age": 25,
+    "email": "bob@example.com",
+    "is_active": false,
+    "joined_at": "2023-02-20T14:30:00Z"
+  },
+  {
+    "name": "Charlie Brown",
+    "age": 35,
+    "email": "charlie@example.com",
+    "is_active": true,
+    "joined_at": "2023-03-10T09:15:00Z"
+  }
+]
