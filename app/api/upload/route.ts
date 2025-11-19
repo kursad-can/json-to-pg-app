@@ -32,23 +32,72 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'JSON array is empty' }, { status: 400 });
         }
 
-        // Infer schema from the first item (or merge keys from all items - simpler to take first for now)
-        // A more robust approach would be to scan all items to find all possible keys and widest types.
-        const sample = data[0];
-        const columns = Object.keys(sample).map((key) => {
-            const value = sample[key];
-            let type = 'TEXT'; // Default
-            if (typeof value === 'number') {
-                type = Number.isInteger(value) ? 'INTEGER' : 'DOUBLE PRECISION';
-            } else if (typeof value === 'boolean') {
-                type = 'BOOLEAN';
-            } else if (value instanceof Date) { // JSON.parse won't produce Date objects automatically, but we could check string format
-                type = 'TIMESTAMP';
-            }
-            // Simple sanitization of column names
-            const safeKey = key.replace(/[^a-zA-Z0-9_]/g, '_');
-            return { name: safeKey, type, originalKey: key };
-        });
+        // Check for "records" array pattern and flatten if found
+        // Pattern: Array<{ records: Array<Object> }>
+        const hasRecords = data.every((item: any) => item && Array.isArray(item.records));
+        if (hasRecords) {
+            data = data.flatMap((item: any) => item.records);
+        }
+
+        if (data.length === 0) {
+            return NextResponse.json({ error: 'No records found in JSON' }, { status: 400 });
+        }
+
+        // 1. Discover all keys and infer types by scanning ALL rows
+        const columnMap = new Map<string, { name: string; type: string; originalKey: string }>();
+
+        for (const row of data) {
+            Object.keys(row).forEach((key) => {
+                const value = row[key];
+                const safeKey = key.replace(/[^a-zA-Z0-9_]/g, '_');
+
+                let currentType = 'TEXT'; // Default fallback
+                if (value === null || value === undefined) {
+                    // If null, we can't infer much, keep existing or wait for non-null
+                    return;
+                } else if (typeof value === 'number') {
+                    currentType = Number.isInteger(value) ? 'INTEGER' : 'DOUBLE PRECISION';
+                } else if (typeof value === 'boolean') {
+                    currentType = 'BOOLEAN';
+                } else if (typeof value === 'object') {
+                    // Arrays and Objects -> JSONB
+                    currentType = 'JSONB';
+                }
+
+                // Update map logic:
+                // If new key, add it.
+                // If existing key, check for type compatibility.
+                // Hierarchy: JSONB > TEXT > DOUBLE PRECISION > INTEGER > BOOLEAN (roughly)
+                // Actually, simplest robust way:
+                // - If we see Object/Array -> JSONB
+                // - If we see mixed types (e.g. number and string) -> TEXT (or JSONB)
+                // - If we see mixed numbers (int and float) -> DOUBLE PRECISION
+
+                if (!columnMap.has(safeKey)) {
+                    columnMap.set(safeKey, { name: safeKey, type: currentType, originalKey: key });
+                } else {
+                    const existing = columnMap.get(safeKey)!;
+                    if (existing.type !== currentType) {
+                        // Type conflict resolution
+                        if (existing.type === 'JSONB' || currentType === 'JSONB') {
+                            existing.type = 'JSONB';
+                        } else if (existing.type === 'TEXT' || currentType === 'TEXT') {
+                            existing.type = 'TEXT';
+                        } else if (
+                            (existing.type === 'INTEGER' && currentType === 'DOUBLE PRECISION') ||
+                            (existing.type === 'DOUBLE PRECISION' && currentType === 'INTEGER')
+                        ) {
+                            existing.type = 'DOUBLE PRECISION';
+                        } else {
+                            // Fallback for other mismatches (e.g. boolean vs number)
+                            existing.type = 'TEXT';
+                        }
+                    }
+                }
+            });
+        }
+
+        const columns = Array.from(columnMap.values());
 
         const pool = getDbPool(connectionString);
         const client = await pool.connect();
@@ -59,18 +108,23 @@ export async function POST(req: NextRequest) {
             // Create Table
             const createTableSQL = `
         CREATE TABLE IF NOT EXISTS "${tableName}" (
-          id SERIAL PRIMARY KEY,
+          _generated_id SERIAL PRIMARY KEY,
           ${columns.map((c) => `"${c.name}" ${c.type}`).join(',\n          ')}
         );
       `;
             await client.query(createTableSQL);
 
             // Insert Data
-            // We'll do single inserts for simplicity, or batch them. Batch is better.
-            // Construct param placeholders ($1, $2, etc.)
-
             for (const row of data) {
-                const values = columns.map(c => row[c.originalKey]);
+                const values = columns.map(c => {
+                    const val = row[c.originalKey];
+                    if (val === undefined || val === null) return null;
+                    if (c.type === 'JSONB' && typeof val !== 'string') {
+                        return JSON.stringify(val);
+                    }
+                    return val;
+                });
+
                 const placeholders = columns.map((_, i) => `$${i + 1}`).join(', ');
                 const insertSQL = `
           INSERT INTO "${tableName}" (${columns.map(c => `"${c.name}"`).join(', ')})

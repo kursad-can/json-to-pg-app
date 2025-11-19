@@ -1,0 +1,28 @@
+[
+    {
+        "id": 1,
+        "name": "Product A",
+        "attributes": {
+            "color": "red",
+            "weight": 10
+        },
+        "tags": [
+            "sale",
+            "new"
+        ]
+    },
+    {
+        "id": 2,
+        "name": "Product B",
+        "price": 99.99,
+        "attributes": {
+            "color": "blue"
+        }
+    },
+    {
+        "id": 3,
+        "name": "Product C",
+        "active": true,
+        "description": "A great product"
+    }
+]
