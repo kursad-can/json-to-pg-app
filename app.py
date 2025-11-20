@@ -17,6 +17,14 @@ connection_string = st.sidebar.text_input(
     help="Format: postgresql://user:password@host:port/database"
 )
 table_name = st.sidebar.text_input("Target Table Name", placeholder="my_table")
+# Choose how to write to existing tables: replace / append / fail
+write_mode = st.sidebar.selectbox(
+    "Write Mode",
+    options=["replace", "append", "fail"],
+    index=0,
+    help=("How to handle existing tables when writing data. \n"
+          "'replace' drops & recreates the table, 'append' inserts rows, 'fail' errors if table exists."),
+)
 
 # --- Main Content ---
 st.write("Upload a JSON file to import it into your PostgreSQL database.")
@@ -95,10 +103,10 @@ if uploaded_file is not None:
                         # Pandas 'fail' is safest default.
                         
                         df.to_sql(
-                            table_name, 
-                            engine, 
-                            if_exists='replace', # Let's use replace to be user friendly for retries
-                            index=False, # Don't write pandas index
+                            table_name,
+                            engine,
+                            if_exists=write_mode,
+                            index=False,
                             dtype=dtype_mapping
                         )
                         
